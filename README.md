@@ -2,7 +2,7 @@
 
 ## Architecture
 
-![Architecture](Supply chain demo.png)
+![Architecture](./supply_chain_demo.png)
 
 
 
