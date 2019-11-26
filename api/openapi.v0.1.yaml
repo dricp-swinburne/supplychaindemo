@@ -1,0 +1,307 @@
+openapi: "3.0.0"
+info:
+  version: 0.1.0
+  title: Supply Chain Demo
+  description: API v0.1 to support basic supply chain demo functionality
+  termsOfService: N/A
+  contact:
+    name: Lin Yang
+    email: liny.code@gmail.com
+    url: https://github.com/dricp-swinburne/supplychaindemo
+  license:
+    name: Apache 2.0
+    url: https://www.apache.org/licenses/LICENSE-2.0.html
+servers:
+  - url: /v0.1/
+  # - url: http://{domain_name}:{port}/{version}
+  #   variables:
+  #     name:
+  #       default: TBD
+  #       enum:
+  #         - TBD
+  #     port:
+  #       enum:
+  #         - "443"
+  #         - "8443"
+  #       default: "443"
+  #     version:
+  #       default: v0.1
+  #       enum:
+  #         - v0.1
+  #         - v0.2
+  #         - v1.0
+paths:
+  /packages:
+    description: endpoints for packages
+    summary: endpoints for packages
+    get:
+      description: |
+        Returns all packages from the system with given status.
+      operationId: findPackages
+      parameters:
+        - name: status
+          in: query
+          description: status of packages to return
+          required: true
+          schema:
+            type: string
+            enum:
+              - all
+              - incoming
+              - arrived
+              - purging
+              - ready_for_order
+      responses:
+        "200":
+          description: packages response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Package"
+        default:
+          description: unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+    post:
+      description: Creates a new package in the record.  Duplicates are allowed
+      operationId: addPackage
+      requestBody:
+        description: Package to add to the record
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/NewPackage"
+      responses:
+        "200":
+          description: package response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Package"
+        default:
+          description: unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+  /reports:
+    description: endpoints for reports
+    summary: endpoints for reports
+    get:
+      description: |
+        Returns all reports from the system that the user has access to
+      operationId: findReports
+      parameters:
+        - name: tags
+          in: query
+          description: tags to filter by
+          required: false
+          style: form
+          schema:
+            type: array
+            items:
+              type: string
+        - name: limit
+          in: query
+          description: maximum number of results to return
+          required: true
+          schema:
+            type: integer
+            format: int32
+            minimum: 5
+      responses:
+        "200":
+          description: report response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Report"
+        default:
+          description: unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+    post:
+      description: Creates a new report in the store. Duplicates are not allowed
+      operationId: addReport
+      requestBody:
+        description: Report to add to the store
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/NewReport"
+      responses:
+        "200":
+          description: report response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Report"
+        default:
+          description: unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+  /report/{id}:
+    get:
+      description: Returns a report based on a single ID, if the user does not have access to the report
+      operationId: find report by id
+      parameters:
+        - $ref: "#/components/parameters/id"
+        # - name: id
+        #   in: path
+        #   description: ID of pet to fetch
+        #   required: true
+        #   schema:
+        #     type: integer
+        #     format: int64
+      responses:
+        "200":
+          description: report response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Report"
+        default:
+          description: unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+    delete:
+      description: deletes a single report based on the ID supplied
+      operationId: deleteReport
+      parameters:
+        - name: id
+          in: path
+          description: ID of pet to delete
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        "204":
+          description: report deleted
+        default:
+          description: unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+components:
+  parameters:
+    id:
+      name: id
+      in: path
+      description: ID of report to fetch
+      required: true
+      schema:
+        type: integer
+        format: int64
+
+  schemas:
+    NewPackage:
+      additionalProperties: false
+      required:
+        - id
+        - temperature
+        - submergence
+        - quantity
+        - weight
+        - price
+      properties:
+        id:
+          type: string
+          nullable: true
+        temperature:
+          type: integer
+          format: int64
+        submergence:
+          type: bool
+        quantity:
+          type: integer
+          format: int64
+        weight:
+          type: integer
+          format: int64
+        price:
+          type: integer
+          format: int64
+
+    Package:
+      allOf:
+        - $ref: "#/components/schemas/NewPackage"
+        - required:
+            - id
+          properties:
+            id:
+              type: integer
+              format: int64
+
+    Location:
+      additionalProperties: false
+      required:
+        - longitude
+        - latitude
+      properties:
+        longitude:
+          type: float
+          format: float64
+        latitude:
+          type: float
+          format: float64
+
+
+    NewReport:
+      additionalProperties: false
+      required:
+        - batchId
+        - userId
+        - action
+        - location
+      properties:
+        batchId:
+          type: string
+          nullable: true
+        userId:
+          type: string
+          nullable: true
+        action:
+          type: string
+          enum:
+            - register
+            - in transit
+            - delivery
+        location:
+        - $ref: "#/components/schemas/Location"
+
+    Report:
+      allOf:
+        - $ref: "#/components/schemas/NewReport"
+        - required:
+            - id
+          properties:
+            id:
+              type: integer
+              format: int64
+    Error:
+      required:
+        - code
+        - message
+      properties:
+        code:
+          type: integer
+          format: int32
+        message:
+          type: string
